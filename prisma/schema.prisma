@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// generator client {
+//   provider = "prisma-client-js"
+//   output   = "../generated/prisma"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
+
+generator client {
+  provider = "prisma-client-js"
+}
+ 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model Room {
+  id    Int     @id @default(autoincrement())
+  code String  @unique
+  roomname String
+  createdAt  DateTime @default(now())
+  gameType  GameType @default(AI_ROAST)
+  results Result[]
+  participants Participant []
+  gamestatus GameStatus @default(PENDING)
+  message Message[]
+}
+
+model Participant {
+  id        Int    @id @default(autoincrement())
+  name     String
+  room   Room @relation(fields: [roomId], references: [id])
+  roomId Int 
+  reasons Reason []
+ createdAt  DateTime @default(now())
+ results Result[]
+}
+
+model Reason {
+  id Int  @id @default(autoincrement())
+  text String
+  participant Participant @relation(fields: [participantId], references: [id])
+  participantId  Int 
+  createdAt  DateTime @default(now())
+
+}
+
+model Result {
+  id Int @id @default(autoincrement())
+  room Room @relation(fields: [roomId], references: [id])
+  roomId Int
+ loser Participant? @relation(fields: [loserId], references: [id])
+loserId Int
+  createdAt  DateTime @default(now())
+}
+
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  summary String
+  roomId    Int
+  createdAt DateTime @default(now())
+  room      Room     @relation(fields: [roomId], references: [id])
+}
+enum  GameType {
+  SPIN_WHELL
+  AI_ROAST
+}
+
+enum GameStatus {
+  PENDING
+  STARTED
+  FINISHED
+}
