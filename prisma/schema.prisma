@@ -25,7 +25,7 @@ datasource db {
 model Room {
   id    Int     @id @default(autoincrement())
   code String  @unique
-  roomname String
+  roomName String
   createdAt  DateTime @default(now())
   gameType  GameType @default(AI_ROAST)
   results Result[]

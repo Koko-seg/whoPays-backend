@@ -1,6 +1,6 @@
 import express from "express";
-import { createRoom } from "../controller/room.controller";
-import { getRoomByCode } from "../controller/getRiimByCode.controller";
+import { getRoomByCode } from "../controller/room/getRoomByCode.controller";
+import { createRoom } from "../controller/room/createRoom.controller";
 
 
 const roomRouter = express.Router();
