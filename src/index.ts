@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { roastReason } from "./controller/reason.controller";
+import { roastReason } from "./controller/excuse/createExcuse.controller";
 import { spinWheel } from "./controller/spin-whell.controller";
 import roomRouter from "./routes/room-routes";
 import participantRouter from "./routes/participant-routes";
