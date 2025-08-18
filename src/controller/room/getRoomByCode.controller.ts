@@ -1,7 +1,7 @@
 // src/controllers/room.controller.ts
 
 import { Request, Response } from "express";
-import prisma from "../utils/prisma";
+import prisma from "../../utils/prisma";
 
 // 5 оронтой кодоор өрөөг авах
 export const getRoomByCode = async (req: Request, res: Response) => {

@@ -1,6 +1,6 @@
 // src/controllers/room.controller.ts
 import { Request, Response } from "express";
-import prisma from "../utils/prisma";
+import prisma from "../../utils/prisma";
 // Prisma Client-аа импортлоно
 
 // 5 оронтой тоон код үүсгэх функц
@@ -26,6 +26,11 @@ async function generateUniqueRoomCode(): Promise<string> {
 
 export const createRoom = async (req: Request, res: Response) => {
   try {
+    // req.body-г шалгаж, undefined бол алдаа буцаана
+    if (!req.body) {
+      return res.status(400).json({ message: "Request body байхгүй байна." });
+    }
+
     const { roomName } = req.body; // Хэрэглэгчээс өрөөний нэрийг хүлээн авна
 
     if (!roomName || typeof roomName !== "string" || roomName.trim() === "") {
@@ -38,7 +43,7 @@ export const createRoom = async (req: Request, res: Response) => {
     // Шинэ өрөөг өгөгдлийн санд үүсгэнэ
     const newRoom = await prisma.room.create({
       data: {
-        roomname: roomName,
+        roomName: roomName,
         code: uniqueCode,
         // Бусад шаардлагатай талбаруудыг Prisma schema-аас хамаарч оруулна.
         // Жишээ нь: gameType, status зэрэгт default утга өгсөн тул энд заавал оруулахгүй байж болно.
@@ -49,7 +54,7 @@ export const createRoom = async (req: Request, res: Response) => {
       select: {
         // Зөвхөн хэрэгтэй талбаруудыг буцаана
         id: true,
-        roomname: true,
+        roomName: true,
         code: true,
         createdAt: true,
       },
@@ -60,7 +65,7 @@ export const createRoom = async (req: Request, res: Response) => {
       message: "Өрөө амжилттай үүслээ!",
       roomCode: newRoom.code,
       roomId: newRoom.id,
-      roomName: newRoom.roomname,
+      roomName: newRoom.roomName,
     });
   } catch (err: any) {
     console.error("Өрөө үүсгэхэд алдаа гарлаа:", err);
