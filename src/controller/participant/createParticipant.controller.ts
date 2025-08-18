@@ -72,7 +72,7 @@ export const createParticipant = async (req: Request, res: Response) => {
       message: "Өрөөнд амжилттай нэгдлээ!",
       room: {
         id: room.id,
-        name: room.roomname,
+        name: room.roomName,
         code: room.code,
       },
       participant: newParticipant,
