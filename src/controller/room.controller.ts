@@ -38,7 +38,7 @@ export const createRoom = async (req: Request, res: Response) => {
     // Шинэ өрөөг өгөгдлийн санд үүсгэнэ
     const newRoom = await prisma.room.create({
       data: {
-        roomname: roomName,
+        roomName: roomName,
         code: uniqueCode,
         // Бусад шаардлагатай талбаруудыг Prisma schema-аас хамаарч оруулна.
         // Жишээ нь: gameType, status зэрэгт default утга өгсөн тул энд заавал оруулахгүй байж болно.
@@ -49,7 +49,7 @@ export const createRoom = async (req: Request, res: Response) => {
       select: {
         // Зөвхөн хэрэгтэй талбаруудыг буцаана
         id: true,
-        roomname: true,
+        roomName: true,
         code: true,
         createdAt: true,
       },
@@ -60,7 +60,7 @@ export const createRoom = async (req: Request, res: Response) => {
       message: "Өрөө амжилттай үүслээ!",
       roomCode: newRoom.code,
       roomId: newRoom.id,
-      roomName: newRoom.roomname,
+      roomName: newRoom.roomName,
     });
   } catch (err: any) {
     console.error("Өрөө үүсгэхэд алдаа гарлаа:", err);
