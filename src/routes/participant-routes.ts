@@ -4,7 +4,7 @@ import { createParticipant } from "../controller/participant/createParticipant.c
 
 const participantRoutes = express.Router();
 
-participantRoutes.post("/", createParticipant);
+participantRoutes.post("/join", createParticipant);
 // participantRouter.get("/:code", getParticipantById);
 
 
