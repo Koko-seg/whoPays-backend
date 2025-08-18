@@ -18,7 +18,7 @@ export const getRoomByCode = async (req: Request, res: Response) => {
       where: { code: code }, 
       select: {
         id: true,
-        roomname: true,
+        roomName: true,
         code: true,
         gameType: true,
         gamestatus: true,
