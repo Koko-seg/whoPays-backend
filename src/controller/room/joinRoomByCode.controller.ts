@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
 
 // 5 оронтой кодоор өрөөг авах
-export const getRoomByCode = async (req: Request, res: Response) => {
+export const JoinRoomByCode = async (req: Request, res: Response) => {
   try {
     const { code } = req.params;
 
@@ -18,7 +18,7 @@ export const getRoomByCode = async (req: Request, res: Response) => {
       where: { code: code }, 
       select: {
         id: true,
-        roomname: true,
+        roomName: true,
         code: true,
         gameType: true,
         gamestatus: true,
