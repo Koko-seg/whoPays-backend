@@ -1,6 +1,6 @@
 // src/controllers/room.controller.ts
 import { Request, Response } from "express";
-import prisma from "../utils/prisma";
+import prisma from "../../utils/prisma";
 // Prisma Client-аа импортлоно
 
 // 5 оронтой тоон код үүсгэх функц
@@ -26,10 +26,28 @@ async function generateUniqueRoomCode(): Promise<string> {
 
 export const createRoom = async (req: Request, res: Response) => {
   try {
-    const { roomName } = req.body; // Хэрэглэгчээс өрөөний нэрийг хүлээн авна
+    // req.body-г шалгаж, undefined бол алдаа буцаана
+    if (!req.body) {
+      return res.status(400).json({ message: "Request body байхгүй байна." });
+    }
+
+    const { roomName, hostNickname } = req.body; // Host nickname нэмэгдлээ
 
     if (!roomName || typeof roomName !== "string" || roomName.trim() === "") {
       return res.status(400).json({ message: "Өрөөний нэрийг оруулна уу." });
+    }
+
+    if (!hostNickname || typeof hostNickname !== "string" || hostNickname.trim() === "") {
+      return res.status(400).json({ message: "Host nickname оруулна уу." });
+    }
+
+    // Өрөөний нэр давтагдсан эсэхийг шалгана
+    const existingRoomByName = await prisma.room.findUnique({
+      where: { roomName: roomName.trim() },
+    });
+
+    if (existingRoomByName) {
+      return res.status(409).json({ message: "Room name already exists" });
     }
 
     // Өвөрмөц 5 оронтой кодыг үүсгэнэ
@@ -38,29 +56,28 @@ export const createRoom = async (req: Request, res: Response) => {
     // Шинэ өрөөг өгөгдлийн санд үүсгэнэ
     const newRoom = await prisma.room.create({
       data: {
-        roomname: roomName,
+        roomName: roomName.trim(),
         code: uniqueCode,
-        // Бусад шаардлагатай талбаруудыг Prisma schema-аас хамаарч оруулна.
-        // Жишээ нь: gameType, status зэрэгт default утга өгсөн тул энд заавал оруулахгүй байж болно.
-        // Хэрэв өөр default утга өгөхгүй бол энд тодорхой зааж өгнө.
         gameType: "SPIN_WHELL", // Энэ тоглоомонд SPIN_WHELL-ийг default болгож болно.
         gamestatus: "PENDING",
       },
-      select: {
-        // Зөвхөн хэрэгтэй талбаруудыг буцаана
-        id: true,
-        roomname: true,
-        code: true,
-        createdAt: true,
+    });
+
+    // Host participant үүсгэнэ
+    const hostParticipant = await prisma.participant.create({
+      data: {
+        name: hostNickname.trim(),
+        roomId: newRoom.id,
+        isHost: true,
       },
     });
 
-    // Өрөөний кодыг буцаана
+    // Өрөөний мэдээллийг буцаана
     return res.status(201).json({
-      message: "Өрөө амжилттай үүслээ!",
+      roomName: newRoom.roomName,
       roomCode: newRoom.code,
       roomId: newRoom.id,
-      roomName: newRoom.roomname,
+      hostParticipantId: hostParticipant.id,
     });
   } catch (err: any) {
     console.error("Өрөө үүсгэхэд алдаа гарлаа:", err);

@@ -1,0 +1,57 @@
+// src/controllers/room.controller.ts
+
+import { Request, Response } from "express";
+import prisma from "../../utils/prisma";
+
+// 5 оронтой кодоор өрөөг авах
+export const getRoomByCode = async (req: Request, res: Response) => {
+  try {
+    const { code } = req.params;
+
+    // Бутархай, хоосон, урт шалгах
+    if (!code || typeof code !== "string" || !/^\d{5}$/.test(code)) {
+      return res.status(400).json({ message: "Хүсьсэн 5 оронтой кодыг оруулна уу." });
+    }
+
+    // Өрөө болон бүх participant-ын мэдээллийг авна
+    const room = await prisma.room.findUnique({
+      where: { code: code }, 
+      include: {
+        participants: {
+          select: {
+            id: true,
+            name: true,
+            roomId: true,
+            isHost: true,
+            createdAt: true,
+            results: true,
+            reasons: true,
+          },
+        },
+        results: true,
+        message: true,
+      },
+    });
+
+    if (!room) {
+      return res.status(404).json({ message: "Room does not exist" });
+    }
+
+    return res.status(200).json({ 
+      room: {
+        id: room.id,
+        code: room.code,
+        roomname: room.roomName, // API spec-д roomname гэж байна
+        createdAt: room.createdAt,
+        gameType: room.gameType,
+        gamestatus: room.gamestatus,
+        participants: room.participants,
+        results: room.results,
+        message: room.message,
+      }
+    });
+  } catch (err: any) {
+    console.error("getRoomByCode алдаа:", err);
+    return res.status(500).json({ message: "Серверийн алдаа", error: err.message });
+  }
+};
