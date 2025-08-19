@@ -13,24 +13,43 @@ export const getRoomByCode = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Хүсьсэн 5 оронтой кодыг оруулна уу." });
     }
 
-    // Хэрвээ schema-д code нь string байвал дараах байдлаар хайна
+    // Өрөө болон бүх participant-ын мэдээллийг авна
     const room = await prisma.room.findUnique({
       where: { code: code }, 
-      select: {
-        id: true,
-        roomname: true,
-        code: true,
-        gameType: true,
-        gamestatus: true,
-        createdAt: true,
+      include: {
+        participants: {
+          select: {
+            id: true,
+            name: true,
+            roomId: true,
+            isHost: true,
+            createdAt: true,
+            results: true,
+            reasons: true,
+          },
+        },
+        results: true,
+        message: true,
       },
     });
 
     if (!room) {
-      return res.status(404).json({ message: "Өгөгдсөн кодтой өрөө олдсонгүй." });
+      return res.status(404).json({ message: "Room does not exist" });
     }
 
-    return res.status(200).json({ room });
+    return res.status(200).json({ 
+      room: {
+        id: room.id,
+        code: room.code,
+        roomname: room.roomName, // API spec-д roomname гэж байна
+        createdAt: room.createdAt,
+        gameType: room.gameType,
+        gamestatus: room.gamestatus,
+        participants: room.participants,
+        results: room.results,
+        message: room.message,
+      }
+    });
   } catch (err: any) {
     console.error("getRoomByCode алдаа:", err);
     return res.status(500).json({ message: "Серверийн алдаа", error: err.message });

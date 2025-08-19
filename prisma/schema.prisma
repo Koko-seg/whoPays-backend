@@ -25,7 +25,7 @@ datasource db {
 model Room {
   id    Int     @id @default(autoincrement())
   code String  @unique
-  roomName String
+  roomName String @unique
   createdAt  DateTime @default(now())
   gameType  GameType @default(AI_ROAST)
   results Result[]
@@ -39,9 +39,12 @@ model Participant {
   name     String
   room   Room @relation(fields: [roomId], references: [id])
   roomId Int 
+  isHost Boolean @default(false)
   reasons Reason []
- createdAt  DateTime @default(now())
- results Result[]
+  createdAt  DateTime @default(now())
+  results Result[]
+  
+  @@unique([roomId, name]) // Өрөө доторх нэр давтагдахгүй
 }
 
 model Reason {
