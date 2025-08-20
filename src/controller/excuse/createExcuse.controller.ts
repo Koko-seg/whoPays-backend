@@ -20,22 +20,14 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  */
 export const triggerRoomRoast = async (req: Request, res: Response) => {
   try {
-    const { roomId } = req.body;
+    const { code} = req.body;
 
-    if (!roomId) {
+    if (!code) {
       return res.status(400).json({ message: "roomId шаардлагатай байна." });
     }
 
-    const parsedRoomId = Number(roomId);
-    if (isNaN(parsedRoomId)) {
-      return res
-        .status(400)
-        .json({ message: "roomId тоон утга байх ёстой." });
-    }
-
-    // Room шалгах
     const room = await prisma.room.findUnique({
-      where: { id: parsedRoomId },
+      where: { code},
       include: {
         participants: {
           include: {
@@ -62,13 +54,13 @@ export const triggerRoomRoast = async (req: Request, res: Response) => {
       return res.status(400).json({
         message: "Тухайн өрөөнд шалтгаан илгээсэн оролцогч байхгүй байна.",
       });
-    }
+    } //ene hesg deer aldaa grsan
 
-    // Санамсаргүй шалтаг сонгох
+    // Random songolt
     const randomIndex = Math.floor(Math.random() * allReasons.length);
     const chosenReason = allReasons[randomIndex];
 
-    // AI Prompt
+
     const prompt = `
 Чи бол Монгол хэл дээр хөгжилтэй roast хийдэг AI.
 Доорх өгөгдсөн шалтгаануудаас хамгийн хөгжилтэйг нь сонгож тэрхүү сонгосон шалтгаанаа ёжилж, 50 тэмдэгтэд багтаасан roast бич.
@@ -79,13 +71,15 @@ Emoji ашиглаж болно. Мөн тэр хүнийг өнөөдрийн �
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
+
+    console.log("Gemini AI result:", result);
     const roast = result.response.text().trim();
 
-    // Message хадгалах
+
     const message = await prisma.message.create({
       data: {
         summary: roast,
-        roomId: parsedRoomId,
+        roomId: room.id,
       },
     });
 

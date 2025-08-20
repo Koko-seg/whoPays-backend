@@ -16,6 +16,8 @@ roomRouter.post("/", createRoom);
 // Get room details by code
 roomRouter.get("/:code", getRoomByCode);
 
+
+
 // Check nickname availability in room
 roomRouter.post("/:roomCode/check-nickname", checkNicknameInRoom);
 
