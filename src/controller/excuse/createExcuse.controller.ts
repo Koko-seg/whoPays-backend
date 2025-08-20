@@ -13,11 +13,6 @@ if (!process.env.GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/**
- * POST /roast/trigger
- * body: { roomId: number }
- * — Room дахь бүх reasons-оос санамсаргүй 1-ийг сонгон roast хийнэ
- */
 export const triggerRoomRoast = async (req: Request, res: Response) => {
   try {
     const { roomId } = req.body;
@@ -49,7 +44,7 @@ export const triggerRoomRoast = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Өрөө олдсонгүй." });
     }
 
-    // Бүх шалтгаануудыг цуглуулах
+    //* Бүх шалтгаануудыг цуглуулах
     const allReasons: string[] = [];
 
     room.participants.forEach((p) => {
@@ -64,11 +59,11 @@ export const triggerRoomRoast = async (req: Request, res: Response) => {
       });
     }
 
-    // Санамсаргүй шалтаг сонгох
+    //* Санамсаргүй шалтаг сонгох
     const randomIndex = Math.floor(Math.random() * allReasons.length);
     const chosenReason = allReasons[randomIndex];
 
-    // AI Prompt
+    //* AI Prompt
     const prompt = `
 Чи бол Монгол хэл дээр хөгжилтэй roast хийдэг AI.
 Доорх өгөгдсөн шалтгаануудаас хамгийн хөгжилтэйг нь сонгож тэрхүү сонгосон шалтгаанаа ёжилж, 50 тэмдэгтэд багтаасан roast бич.

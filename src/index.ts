@@ -6,6 +6,7 @@ import roomRouter from "./routes/room-routes";
 import participantRoutes from "./routes/participant-routes";
 
 import excuseRoutes from "./routes/excuse-with-roast";
+import adminRouter from "./routes/admin-routes";
 
 const app = express();
 const PORT = 4200;
@@ -22,6 +23,9 @@ app.use("/spin", spinWheel);
 app.use("/room", roomRouter);
 
 app.use("/participant", participantRoutes);
+
+// Admin routes (use x-admin-key header with ADMIN_KEY env var)
+app.use("/admin", adminRouter);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
