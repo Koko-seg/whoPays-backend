@@ -1,5 +1,4 @@
-// controller/excuse/triggerRoast.controller.ts
-
+// src/controller/excuse/triggerRoast.controller.ts
 import { Request, Response } from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
@@ -15,19 +14,17 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export const triggerRoomRoast = async (req: Request, res: Response) => {
   try {
-    const { code} = req.body;
+    const { code } = req.body;
 
     if (!code) {
       return res.status(400).json({ message: "roomId шаардлагатай байна." });
     }
 
     const room = await prisma.room.findUnique({
-      where: { code},
+      where: { code },
       include: {
         participants: {
-          include: {
-            reasons: true,
-          },
+          include: { reasons: true },
         },
       },
     });
@@ -36,48 +33,38 @@ export const triggerRoomRoast = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Өрөө олдсонгүй." });
     }
 
-    //* Бүх шалтгаануудыг цуглуулах
-    const allReasons: string[] = [];
+    //* Бүх participants reason бичсэн эсэхийг шалгах
+    const participantsWithoutReason = room.participants.filter(
+      (p) => p.reasons.length === 0
+    );
 
-    room.participants.forEach((p) => {
-      p.reasons.forEach((r) => {
-        allReasons.push(r.text);
-      });
-    });
-
-    if (allReasons.length === 0) {
+    if (participantsWithoutReason.length > 0) {
       return res.status(400).json({
-        message: "Тухайн өрөөнд шалтгаан илгээсэн оролцогч байхгүй байна.",
+        message: `Дараах оролцогчид шалтгаан илгээсэнгүй: ${participantsWithoutReason
+          .map((p) => p.name)
+          .join(", ")}`,
       });
-    } //ene hesg deer aldaa grsan
+    }
 
+    //* Бүх шалтгаануудыг цуглуулах
+    const allReasons = room.participants.flatMap((p) =>
+      p.reasons.map((r) => r.text)
+    );
 
-    //* Санамсаргүй шалтаг сонгох
     const randomIndex = Math.floor(Math.random() * allReasons.length);
     const chosenReason = allReasons[randomIndex];
-
-    //* AI Prompt
-
-    // Random songolt
-    const randomIndex = Math.floor(Math.random() * allReasons.length);
-    const chosenReason = allReasons[randomIndex];
-
-
 
     const prompt = `
 Чи бол Монгол хэл дээр хөгжилтэй roast хийдэг AI.
 Доорх өгөгдсөн шалтгаануудаас хамгийн хөгжилтэйг нь сонгож тэрхүү сонгосон шалтгаанаа ёжилж, 50 тэмдэгтэд багтаасан roast бич.
-Emoji ашиглаж болно. Мөн тэр хүнийг өнөөдрийн тооцооноос  чөлөөлсөн гэж үзэж болно.
+Emoji ашиглаж болно. Мөн тэр хүнийг өнөөдрийн тооцооноос чөлөөлсөн гэж үзэж болно.
 Шалтгаан:
 "${chosenReason}"
 `;
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
-
-    console.log("Gemini AI result:", result);
     const roast = result.response.text().trim();
-
 
     const message = await prisma.message.create({
       data: {

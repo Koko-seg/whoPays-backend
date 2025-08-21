@@ -33,39 +33,39 @@ model Room {
   gamestatus GameStatus @default(PENDING)
   message Message[]
 }
-
+ 
 model Participant {
   id        Int    @id @default(autoincrement())
   name     String
   room   Room @relation(fields: [roomId], references: [id])
-  roomId Int 
+  roomId Int
   isHost Boolean @default(false)
   reasons Reason []
   createdAt  DateTime @default(now())
   results Result[]
   
-  @@unique([roomId, name]) // Өрөө доторх нэр давтагдахгүй
+  @@unique([roomId, name])
 }
-
+ 
 model Reason {
   id Int  @id @default(autoincrement())
   text String
   participant Participant @relation(fields: [participantId], references: [id])
-  participantId  Int 
+  participantId  Int
   createdAt  DateTime @default(now())
-
+ 
 }
-
+ 
 model Result {
   id Int @id @default(autoincrement())
   room Room @relation(fields: [roomId], references: [id])
   roomId Int
- loser Participant? @relation(fields: [loserId], references: [id])
+loser Participant? @relation(fields: [loserId], references: [id])
 loserId Int
   createdAt  DateTime @default(now())
 }
-
-
+ 
+ 
 model Message {
   id        Int      @id @default(autoincrement())
   summary String
@@ -76,8 +76,10 @@ model Message {
 enum  GameType {
   SPIN_WHELL
   AI_ROAST
+  RUNNER
+  TICTACTOE
 }
-
+ 
 enum GameStatus {
   PENDING
   STARTED
