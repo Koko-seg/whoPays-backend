@@ -81,7 +81,7 @@
 import { Request, Response } from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
-import prisma from "../../utils/prisma";
+import prisma from "../utils/prisma";
 
 dotenv.config();
 
