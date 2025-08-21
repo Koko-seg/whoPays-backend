@@ -13,11 +13,6 @@ if (!process.env.GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-/**
- * POST /roast/trigger
- * body: { roomId: number }
- * — Room дахь бүх reasons-оос санамсаргүй 1-ийг сонгон roast хийнэ
- */
 export const triggerRoomRoast = async (req: Request, res: Response) => {
   try {
     const { code} = req.body;
@@ -41,7 +36,7 @@ export const triggerRoomRoast = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Өрөө олдсонгүй." });
     }
 
-    // Бүх шалтгаануудыг цуглуулах
+    //* Бүх шалтгаануудыг цуглуулах
     const allReasons: string[] = [];
 
     room.participants.forEach((p) => {
@@ -56,9 +51,17 @@ export const triggerRoomRoast = async (req: Request, res: Response) => {
       });
     } //ene hesg deer aldaa grsan
 
+
+    //* Санамсаргүй шалтаг сонгох
+    const randomIndex = Math.floor(Math.random() * allReasons.length);
+    const chosenReason = allReasons[randomIndex];
+
+    //* AI Prompt
+
     // Random songolt
     const randomIndex = Math.floor(Math.random() * allReasons.length);
     const chosenReason = allReasons[randomIndex];
+
 
 
     const prompt = `
