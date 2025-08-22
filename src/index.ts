@@ -6,10 +6,8 @@ import excuseRoutes from "./routes/excuse-with-roast";
 import adminRouter from "./routes/admin-routes";
 
 import { createServer } from "http";
-import { Server } from "socket.io";
 import { Server as IOServer } from "socket.io";
 import { spinWheel } from "./controller/spin-whell.controller";
-
 
 import prisma from "./utils/prisma";
 
@@ -37,7 +35,6 @@ app.use("/room", roomRouter);
 app.use("/participant", participantRoutes);
 
 app.use("/admin", adminRouter);
-
 
 //* Option list shared between all clients
 let wheelData: { option: string }[] = [
@@ -89,10 +86,6 @@ io.on("connection", (socket) => {
   });
 });
 
-
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
 });
-
-
-
