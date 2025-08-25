@@ -54,8 +54,8 @@ const createRoom = async (req, res) => {
                 gamestatus: "PENDING",
             },
         });
-        // Host participant үүсгэнэ
-        const hostParticipant = await prisma_1.default.participant.create({
+        // Host player үүсгэнэ
+        const hostplayer = await prisma_1.default.player.create({
             data: {
                 name: hostNickname.trim(),
                 roomId: newRoom.id,
@@ -67,7 +67,7 @@ const createRoom = async (req, res) => {
             roomName: newRoom.roomName,
             roomCode: newRoom.code,
             roomId: newRoom.id,
-            hostParticipantId: hostParticipant.id,
+            hostplayerId: hostplayer.id,
         });
     }
     catch (err) {

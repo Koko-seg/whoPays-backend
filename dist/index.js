@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const room_routes_1 = __importDefault(require("./routes/room-routes"));
-const participant_routes_1 = __importDefault(require("./routes/participant-routes"));
+const player_routes_1 = __importDefault(require("./routes/player-routes"));
 const excuse_with_roast_1 = __importDefault(require("./routes/excuse-with-roast"));
 const admin_routes_1 = __importDefault(require("./routes/admin-routes"));
 const http_1 = require("http");
@@ -25,7 +25,7 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.use("/roast", excuse_with_roast_1.default);
 app.use("/spin", spin_whell_controller_1.spinWheel);
 app.use("/room", room_routes_1.default);
-app.use("/participant", participant_routes_1.default);
+app.use("/player", player_routes_1.default);
 app.use("/admin", admin_routes_1.default);
 //* Option list shared between all clients
 let wheelData = [

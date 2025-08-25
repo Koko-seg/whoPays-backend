@@ -21,7 +21,7 @@ const triggerRoomRoast = async (req, res) => {
         const room = await prisma_1.default.room.findUnique({
             where: { code },
             include: {
-                participants: {
+                player: {
                     include: { reasons: true },
                 },
             },
@@ -29,17 +29,17 @@ const triggerRoomRoast = async (req, res) => {
         if (!room) {
             return res.status(404).json({ message: "Өрөө олдсонгүй." });
         }
-        //* Бүх participants reason бичсэн эсэхийг шалгах
-        const participantsWithoutReason = room.participants.filter((p) => p.reasons.length === 0);
-        if (participantsWithoutReason.length > 0) {
+        //* Бүх player reason бичсэн эсэхийг шалгах
+        const playerWithoutReason = room.player.filter((p) => p.reasons.length === 0);
+        if (playerWithoutReason.length > 0) {
             return res.status(400).json({
-                message: `Дараах оролцогчид шалтгаан илгээсэнгүй: ${participantsWithoutReason
+                message: `Дараах оролцогчид шалтгаан илгээсэнгүй: ${playerWithoutReason
                     .map((p) => p.name)
                     .join(", ")}`,
             });
         }
         //* Бүх шалтгаануудыг цуглуулах
-        const allReasons = room.participants.flatMap((p) => p.reasons.map((r) => r.text));
+        const allReasons = room.player.flatMap((p) => p.reasons.map((r) => r.text));
         const randomIndex = Math.floor(Math.random() * allReasons.length);
         const chosenReason = allReasons[randomIndex];
         const prompt = `

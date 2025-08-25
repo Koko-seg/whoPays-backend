@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addParticipantToRoom = void 0;
+exports.addplayerToRoom = void 0;
 const prisma_1 = __importDefault(require("../../utils/prisma"));
-const MAX_PARTICIPANTS = 10;
-const addParticipantToRoom = async (req, res) => {
+const MAX_player = 10;
+const addplayerToRoom = async (req, res) => {
     try {
         const { roomCode } = req.params;
         const { nickname } = req.body;
@@ -20,7 +20,7 @@ const addParticipantToRoom = async (req, res) => {
         const room = await prisma_1.default.room.findUnique({
             where: { code: roomCode },
             include: {
-                participants: true,
+                player: true,
             },
         });
         if (!room) {
@@ -29,16 +29,16 @@ const addParticipantToRoom = async (req, res) => {
         if (room.gamestatus !== "PENDING") {
             return res.status(400).json({ message: "Cannot join room: game already started" });
         }
-        if (room.participants.length >= MAX_PARTICIPANTS) {
+        if (room.player.length >= MAX_player) {
             return res.status(400).json({ message: "Room is full" });
         }
         // Nickname давтагдсан эсэхийг шалгана
-        const existingParticipant = room.participants.find((p) => p.name.toLowerCase() === nickname.trim().toLowerCase());
-        if (existingParticipant) {
+        const existingplayer = room.player.find((p) => p.name.toLowerCase() === nickname.trim().toLowerCase());
+        if (existingplayer) {
             return res.status(409).json({ message: "Nickname already taken" });
         }
-        // Шинэ participant үүсгэнэ
-        const newParticipant = await prisma_1.default.participant.create({
+        // Шинэ player үүсгэнэ
+        const newPlayer = await prisma_1.default.player.create({
             data: {
                 name: nickname.trim(),
                 roomId: room.id,
@@ -46,15 +46,15 @@ const addParticipantToRoom = async (req, res) => {
             },
         });
         return res.status(201).json({
-            participantId: newParticipant.id,
-            message: "Participant added successfully",
+            playerId: newPlayer.id,
+            message: "player added successfully",
         });
     }
     catch (err) {
-        console.error("Participant нэмэхэд алдаа гарлаа:", err);
+        console.error("player нэмэхэд алдаа гарлаа:", err);
         return res
             .status(500)
             .json({ message: "Серверийн алдаа гарлаа", error: err.message });
     }
 };
-exports.addParticipantToRoom = addParticipantToRoom;
+exports.addplayerToRoom = addplayerToRoom;

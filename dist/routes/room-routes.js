@@ -8,8 +8,8 @@ const getRoomByCode_controller_1 = require("../controller/room/getRoomByCode.con
 const createRoom_controller_1 = require("../controller/room/createRoom.controller");
 const checkRoomName_controller_1 = require("../controller/room/checkRoomName.controller");
 const checkNicknameInRoom_controller_1 = require("../controller/room/checkNicknameInRoom.controller");
-const addParticipantToRoom_controller_1 = require("../controller/room/addParticipantToRoom.controller");
-const removeParticipantFromRoom_controller_1 = require("../controller/room/removeParticipantFromRoom.controller");
+const addplayerToRoom_controller_1 = require("../controller/room/addplayerToRoom.controller");
+const removeplayerFromRoom_controller_1 = require("../controller/room/removeplayerFromRoom.controller");
 const roomRouter = express_1.default.Router();
 //* Check room name uniqueness
 roomRouter.post("/check-name", checkRoomName_controller_1.checkRoomName);
@@ -19,8 +19,8 @@ roomRouter.post("/", createRoom_controller_1.createRoom);
 roomRouter.get("/:code", getRoomByCode_controller_1.getRoomByCode);
 //* Check nickname availability in room
 roomRouter.post("/:roomCode/check-nickname", checkNicknameInRoom_controller_1.checkNicknameInRoom);
-//* Add participant to room
-roomRouter.post("/:roomCode/participants", addParticipantToRoom_controller_1.addParticipantToRoom);
-//* Remove participant from room
-roomRouter.delete("/:roomCode/participants/:participantId", removeParticipantFromRoom_controller_1.removeParticipantFromRoom);
+//* Add player to room
+roomRouter.post("/:roomCode/player", addplayerToRoom_controller_1.addplayerToRoom);
+//* Remove player from room
+roomRouter.delete("/:roomCode/player/:playerId", removeplayerFromRoom_controller_1.removeplayerFromRoom);
 exports.default = roomRouter;

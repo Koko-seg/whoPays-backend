@@ -4,7 +4,7 @@
 // import prisma from "../../utils/prisma";
 
 // // 5 оронтой кодоор өрөөг авах
-// export const getParticipantById = async (req: Request, res: Response) => {
+// export const getplayerById = async (req: Request, res: Response) => {
 //   try {
 //     const { code } = req.params;
 
@@ -14,7 +14,7 @@
 //     }
 
 //     // Хэрвээ schema-д code нь string байвал дараах байдлаар хайна
-//     const room = await prisma.participant.findUnique({
+//     const room = await prisma.player.findUnique({
 //       where: { code: code }, 
 //       select: {
 //         id: true,

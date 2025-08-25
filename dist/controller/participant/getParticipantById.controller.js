@@ -3,7 +3,7 @@
 // import { Request, Response } from "express";
 // import prisma from "../../utils/prisma";
 // // 5 оронтой кодоор өрөөг авах
-// export const getParticipantById = async (req: Request, res: Response) => {
+// export const getplayerById = async (req: Request, res: Response) => {
 //   try {
 //     const { code } = req.params;
 //     // Бутархай, хоосон, урт шалгах
@@ -11,7 +11,7 @@
 //       return res.status(400).json({ message: "Хүсьсэн 5 оронтой кодыг оруулна уу." });
 //     }
 //     // Хэрвээ schema-д code нь string байвал дараах байдлаар хайна
-//     const room = await prisma.participant.findUnique({
+//     const room = await prisma.player.findUnique({
 //       where: { code: code }, 
 //       select: {
 //         id: true,

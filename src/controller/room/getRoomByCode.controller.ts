@@ -13,11 +13,11 @@ export const getRoomByCode = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Хүсьсэн 5 оронтой кодыг оруулна уу." });
     }
 
-    // Өрөө болон бүх participant-ын мэдээллийг авна
+    // Өрөө болон бүх player-ын мэдээллийг авна
     const room = await prisma.room.findUnique({
       where: { code: code }, 
       include: {
-        participants: {
+        player: {
           select: {
             id: true,
             name: true,
@@ -45,7 +45,7 @@ export const getRoomByCode = async (req: Request, res: Response) => {
         createdAt: room.createdAt,
         gameType: room.gameType,
         gamestatus: room.gamestatus,
-        participants: room.participants,
+        player: room.player,
         results: room.results,
         message: room.message,
       }

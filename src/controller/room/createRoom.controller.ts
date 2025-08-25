@@ -41,15 +41,6 @@ export const createRoom = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Host nickname оруулна уу." });
     }
 
-    // Өрөөний нэр давтагдсан эсэхийг шалгана
-    const existingRoomByName = await prisma.room.findUnique({
-      where: { roomName: roomName.trim() },
-    });
-
-    if (existingRoomByName) {
-      return res.status(409).json({ message: "Room name already exists" });
-    }
-
     // Өвөрмөц 5 оронтой кодыг үүсгэнэ
     const uniqueCode = await generateUniqueRoomCode();
 
@@ -63,8 +54,8 @@ export const createRoom = async (req: Request, res: Response) => {
       },
     });
 
-    // Host participant үүсгэнэ
-    const hostParticipant = await prisma.participant.create({
+    // Host player үүсгэнэ
+    const hostPlayer = await prisma.player.create({
       data: {
         name: hostNickname.trim(),
         roomId: newRoom.id,
@@ -77,7 +68,7 @@ export const createRoom = async (req: Request, res: Response) => {
       roomName: newRoom.roomName,
       roomCode: newRoom.code,
       roomId: newRoom.id,
-      hostParticipantId: hostParticipant.id,
+      hostplayerId: hostPlayer.id,
     });
   } catch (err: any) {
     console.error("Өрөө үүсгэхэд алдаа гарлаа:", err);

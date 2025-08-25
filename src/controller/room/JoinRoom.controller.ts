@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
 
-const MAX_PARTICIPANTS = 10;
+const MAX_player = 10;
 
-export const addParticipantToRoom = async (req: Request, res: Response) => {
+export const addplayerToRoom = async (req: Request, res: Response) => {
   try {
     const { roomCode } = req.params;
     const { nickname } = req.body;
@@ -20,7 +20,7 @@ export const addParticipantToRoom = async (req: Request, res: Response) => {
     const room = await prisma.room.findUnique({
       where: { code: roomCode },
       include: {
-        participants: true,
+        player: true,
       },
     });
 
@@ -32,21 +32,21 @@ export const addParticipantToRoom = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Cannot join room: game already started" });
     }
 
-    if (room.participants.length >= MAX_PARTICIPANTS) {
+    if (room.player.length >= MAX_player) {
       return res.status(400).json({ message: "Room is full" });
     }
 
     // Nickname давтагдсан эсэхийг шалгана
-    const existingParticipant = room.participants.find(
+    const existingplayer = room.player.find(
       (p) => p.name.toLowerCase() === nickname.trim().toLowerCase()
     );
 
-    if (existingParticipant) {
+    if (existingplayer) {
       return res.status(409).json({ message: "Nickname already taken" });
     }
 
-    // Шинэ participant үүсгэнэ
-    const newParticipant = await prisma.participant.create({
+    // Шинэ player үүсгэнэ
+    const newPlayer = await prisma.player.create({
       data: {
         name: nickname.trim(),
         roomId: room.id,
@@ -55,11 +55,11 @@ export const addParticipantToRoom = async (req: Request, res: Response) => {
     });
 
     return res.status(201).json({
-      participantId: newParticipant.id,
-      message: "Participant added successfully",
+      playerId: newPlayer.id,
+      message: "player added successfully",
     });
   } catch (err: any) {
-    console.error("Participant нэмэхэд алдаа гарлаа:", err);
+    console.error("player нэмэхэд алдаа гарлаа:", err);
     return res
       .status(500)
       .json({ message: "Серверийн алдаа гарлаа", error: err.message });

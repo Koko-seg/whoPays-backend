@@ -1,15 +1,13 @@
 import express from "express";
 import { getRoomByCode } from "../controller/room/getRoomByCode.controller";
 import { createRoom } from "../controller/room/createRoom.controller";
-import { checkRoomName } from "../controller/room/checkRoomName.controller";
-import { checkNicknameInRoom } from "../controller/room/checkNicknameInRoom.controller";
-import { addParticipantToRoom } from "../controller/room/addParticipantToRoom.controller";
-import { removeParticipantFromRoom } from "../controller/room/removeParticipantFromRoom.controller";
+
+import { addplayerToRoom } from "../controller/room/JoinRoom.controller";
+import { removeplayerFromRoom } from "../controller/room/removeParticipantFromRoom.controller";
+
 
 const roomRouter = express.Router();
 
-//* Check room name uniqueness
-roomRouter.post("/check-name", checkRoomName);
 
 //* Create room
 roomRouter.post("/", createRoom);
@@ -17,17 +15,11 @@ roomRouter.post("/", createRoom);
 //* Get room details by code
 roomRouter.get("/:code", getRoomByCode);
 
+//* Add player to room
+roomRouter.post("/:roomCode/player", addplayerToRoom);
 
-//* Check nickname availability in room
-
-
-roomRouter.post("/:roomCode/check-nickname", checkNicknameInRoom);
-
-//* Add participant to room
-roomRouter.post("/:roomCode/participants", addParticipantToRoom);
-
-//* Remove participant from room
-roomRouter.delete("/:roomCode/participants/:participantId", removeParticipantFromRoom);
+//* Remove player from room
+roomRouter.delete("/:roomCode/player/:playerId", removeplayerFromRoom);
 
 
 export default roomRouter;

@@ -15,8 +15,8 @@ export const deleteRoomByCode = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    // First delete participants, results, messages if cascade not configured
-    await prisma.participant.deleteMany({ where: { roomId: room.id } });
+    // First delete player, results, messages if cascade not configured
+    await prisma.player.deleteMany({ where: { roomId: room.id } });
     await prisma.result.deleteMany({ where: { roomId: room.id } });
     await prisma.message.deleteMany({ where: { roomId: room.id } });
 

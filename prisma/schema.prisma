@@ -26,16 +26,16 @@ datasource db {
 model Room {
   id    Int     @id @default(autoincrement())
   code String  @unique
-  roomName String @unique
+  roomName String 
   createdAt  DateTime @default(now())
   gameType  GameType @default(AI_ROAST)
   results Result[]
-  participants Participant []
+  player Player []
   gamestatus GameStatus @default(PENDING)
   message Message[]
 }
  
-model Participant {
+model Player {
   id        Int    @id @default(autoincrement())
   name     String
   room   Room @relation(fields: [roomId], references: [id])
@@ -51,8 +51,8 @@ model Participant {
 model Reason {
   id Int  @id @default(autoincrement())
   text String
-  participant Participant @relation(fields: [participantId], references: [id])
-  participantId  Int
+  player Player @relation(fields: [playerId], references: [id])
+  playerId  Int
   createdAt  DateTime @default(now())
  
 }
@@ -61,7 +61,7 @@ model Result {
   id Int @id @default(autoincrement())
   room Room @relation(fields: [roomId], references: [id])
   roomId Int
-loser Participant? @relation(fields: [loserId], references: [id])
+loser Player? @relation(fields: [loserId], references: [id])
 loserId Int
   createdAt  DateTime @default(now())
 }

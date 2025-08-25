@@ -8,7 +8,7 @@ const prisma_1 = __importDefault(require("../../utils/prisma"));
 const listRooms = async (req, res) => {
     try {
         const rooms = await prisma_1.default.room.findMany({
-            include: { participants: true, results: true, message: true },
+            include: { player: true, results: true, message: true },
         });
         return res.status(200).json({ rooms });
     }

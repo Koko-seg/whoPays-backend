@@ -1,19 +1,19 @@
-// src/controllers/participant.controller.ts or add to room.controller.ts
+// src/controllers/player.controller.ts or add to room.controller.ts
 import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
  
-export const createParticipant = async (req: Request, res: Response) => {
+export const createplayer = async (req: Request, res: Response) => {
   try {
-    const { roomCode, participantName } = req.body; // Хүсэлтээс өрөөний код болон тоглогчийн нэрийг авна
+    const { roomCode, playerName } = req.body; // Хүсэлтээс өрөөний код болон тоглогчийн нэрийг авна
  
     // Оролтын утгуудыг шалгана
     if (!roomCode || typeof roomCode !== "string" || roomCode.trim() === "") {
       return res.status(400).json({ message: "Өрөөний кодыг оруулна уу." });
     }
     if (
-      !participantName ||
-      typeof participantName !== "string" ||
-      participantName.trim() === ""
+      !playerName ||
+      typeof playerName !== "string" ||
+      playerName.trim() === ""
     ) {
       return res.status(400).json({ message: "Тоглогчийн нэрийг оруулна уу." });
     }
@@ -22,7 +22,7 @@ export const createParticipant = async (req: Request, res: Response) => {
     const room = await prisma.room.findUnique({
       where: { code: roomCode.trim() },
       include: {
-        participants: true, // Өрөөний тоглогчдыг хамт татна
+        player: true, // Өрөөний тоглогчдыг хамт татна
       },
     });
  
@@ -34,11 +34,11 @@ export const createParticipant = async (req: Request, res: Response) => {
     }
  
     // Ижил нэртэй тоглогч тухайн өрөөнд байгаа эсэхийг шалгана (нэр давхардлаас сэргийлнэ)
-    const existingParticipant = room.participants.find(
-      (p) => p.name.toLowerCase() === participantName.trim().toLowerCase()
+    const existingplayer = room.player.find(
+      (p) => p.name.toLowerCase() === playerName.trim().toLowerCase()
     );
  
-    // if (existingParticipant) {
+    // if (existingplayer) {
     //   // Хэрэв ижил нэртэй тоглогч байвал тэр тоглогчийг буцаана
     //   return res.status(200).json({
     //     message: "Та аль хэдийн энэ өрөөнд ижил нэрээр нэгдсэн байна.",
@@ -47,17 +47,17 @@ export const createParticipant = async (req: Request, res: Response) => {
     //       name: room.roomName,
     //       code: room.code,
     //     },
-    //     participant: {
-    //       id: existingParticipant.id,
-    //       name: existingParticipant.name,
+    //     player: {
+    //       id: existingplayer.id,
+    //       name: existingplayer.name,
     //     },
     //   });
     // }
  
     // Шинэ тоглогчийг өгөгдлийн санд үүсгэнэ
-    const newParticipant = await prisma.participant.create({
+    const newPlayer = await prisma.player.create({
       data: {
-        name: participantName.trim(),
+        name: playerName.trim(),
         roomId: room.id, // Олдсон өрөөний ID-аар холбоно
       },
       select: {
@@ -75,7 +75,7 @@ export const createParticipant = async (req: Request, res: Response) => {
         name: room.roomName,
         code: room.code,
       },
-      participant: newParticipant,
+      player: newPlayer,
     });
   } catch (err: any) {
     console.error("Өрөөнд нэгдэхэд алдаа гарлаа:", err);

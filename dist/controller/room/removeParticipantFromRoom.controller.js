@@ -3,59 +3,59 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeParticipantFromRoom = void 0;
+exports.removeplayerFromRoom = void 0;
 const prisma_1 = __importDefault(require("../../utils/prisma"));
-const removeParticipantFromRoom = async (req, res) => {
+const removeplayerFromRoom = async (req, res) => {
     try {
-        const { roomCode, participantId } = req.params;
+        const { roomCode, playerId } = req.params;
         if (!roomCode || roomCode.length !== 5) {
             return res.status(400).json({ message: "Зөв өрөөний код оруулна уу (5 орон)" });
         }
-        if (!participantId || isNaN(Number(participantId))) {
-            return res.status(400).json({ message: "Зөв participant ID оруулна уу" });
+        if (!playerId || isNaN(Number(playerId))) {
+            return res.status(400).json({ message: "Зөв player ID оруулна уу" });
         }
         // Өрөө байгаа эсэхийг шалгана
         const room = await prisma_1.default.room.findUnique({
             where: { code: roomCode },
             include: {
-                participants: true,
+                player: true,
             },
         });
         if (!room) {
             return res.status(404).json({ message: "Room does not exist" });
         }
-        // Тоглоом эхэлсэн бол participant устгаж болохгүй
+        // Тоглоом эхэлсэн бол player устгаж болохгүй
         if (room.gamestatus !== "PENDING") {
-            return res.status(400).json({ message: "Cannot remove participant: game already started" });
+            return res.status(400).json({ message: "Cannot remove player: game already started" });
         }
-        // Participant байгаа эсэх, тухайн өрөөнд харьяалагдаж байгаа эсэхийг шалгана
-        const participant = await prisma_1.default.participant.findFirst({
+        // player байгаа эсэх, тухайн өрөөнд харьяалагдаж байгаа эсэхийг шалгана
+        const player = await prisma_1.default.player.findFirst({
             where: {
-                id: Number(participantId),
+                id: Number(playerId),
                 roomId: room.id,
             },
         });
-        if (!participant) {
-            return res.status(404).json({ message: "Participant not found in this room" });
+        if (!player) {
+            return res.status(404).json({ message: "player not found in this room" });
         }
         // Host бол устгаж болохгүй
-        if (participant.isHost) {
-            return res.status(400).json({ message: "Cannot remove host participant" });
+        if (player.isHost) {
+            return res.status(400).json({ message: "Cannot remove host player" });
         }
-        // Participant-г устгана
-        await prisma_1.default.participant.delete({
-            where: { id: Number(participantId) },
+        // player-г устгана
+        await prisma_1.default.player.delete({
+            where: { id: Number(playerId) },
         });
         return res.status(200).json({
-            message: "Participant removed successfully",
-            participantId: Number(participantId),
+            message: "player removed successfully",
+            playerId: Number(playerId),
         });
     }
     catch (err) {
-        console.error("Participant устгахад алдаа гарлаа:", err);
+        console.error("player устгахад алдаа гарлаа:", err);
         return res
             .status(500)
             .json({ message: "Серверийн алдаа гарлаа", error: err.message });
     }
 };
-exports.removeParticipantFromRoom = removeParticipantFromRoom;
+exports.removeplayerFromRoom = removeplayerFromRoom;

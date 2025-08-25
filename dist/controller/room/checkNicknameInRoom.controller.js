@@ -23,7 +23,7 @@ const checkNicknameInRoom = async (req, res) => {
             return res.status(404).json({ message: "Room does not exist" });
         }
         // Тухайн өрөөнд nickname давтагдсан эсэхийг шалгана
-        const existingParticipant = await prisma_1.default.participant.findUnique({
+        const existingplayer = await prisma_1.default.player.findUnique({
             where: {
                 roomId_name: {
                     roomId: room.id,
@@ -31,7 +31,7 @@ const checkNicknameInRoom = async (req, res) => {
                 },
             },
         });
-        if (existingParticipant) {
+        if (existingplayer) {
             return res.status(409).json({ message: "Nickname already taken in this room" });
         }
         return res.status(200).json({ message: "Nickname is available" });
