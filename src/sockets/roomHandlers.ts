@@ -2,109 +2,117 @@ import { Server, Socket } from "socket.io";
 import prisma from "../utils/prisma";
 
 export function roomHandlers(io: Server, socket: Socket) {
-  socket.on("joinRoom", async ({ roomCode, playerName }) => {
+  const getRoomData = async (roomCode: string) => {
+    const roomWithPlayers = await prisma.room.findUnique({
+      where: { code: roomCode },
+      include: { player: true },
+    });
+
+    if (!roomWithPlayers) return null;
+
+    return {
+      roomCode: roomWithPlayers.code,
+      host: roomWithPlayers.player.find((p) => p.isHost)?.name || null,
+      players: roomWithPlayers.player.map((p) => p.name),
+    };
+  };
+ socket.on("joinRoom", async ({ roomCode, playerName }) => {
     if (!roomCode || !playerName) {
-      socket.emit("joinError", {
-        message: "Өрөөний код болон нэр хоосон байна.",
-      });
+      // ... existing code ...
       return;
     }
 
     try {
-      let room = await prisma.room.findUnique({
+      const room = await prisma.room.findUnique({
         where: { code: roomCode },
-        include: { player: true },
       });
+
       if (!room) {
         socket.emit("joinError", {
           message: "Өрөө олдсонгүй. Кодоо зөв эсэхийг шалгана уу.",
         });
         return;
       }
+
       socket.join(roomCode);
 
-      const existingPlayer = room.player.find((p) => p.name === playerName);
+      // Өрөөнд хост байгаа эсэхийг урьдчилан шалгана
+      const hostExists = await prisma.player.count({
+        where: { roomId: room.id, isHost: true },
+      });
 
-      console.log("Existing player:", existingPlayer);
-
-      if (!existingPlayer) {
-        await prisma.player.create({
-          data: {
+      // UPSERT ашиглан уралдааны нөхцөлийг арилгана
+      await prisma.player.upsert({
+        where: {
+          // Тоглогчийг нэр болон өрөөний ID-аар нь давхцуулахгүйгээр хайна
+          // Энэ нь таны schema.prisma файлд @@unique([name, roomId]) тохиргоо шаардана
+          name_roomId: {
             name: playerName,
-            isHost: room.player.length === 0,
-
             roomId: room.id,
-            socketId: socket.id,
           },
-        });
-      } else {
-        await prisma.player.update({
-          where: { id: existingPlayer.id },
-          data: { socketId: socket.id },
-        });
-      }
-
-      const roomData = await prisma.room.findUnique({
-        where: { code: roomCode },
-        include: { player: true },
+        },
+        // Хэрэв тоглогч олдвол эндхийг ажиллуулна
+        update: {
+          socketId: socket.id,
+        },
+        // Хэрэв тоглогч олдохгүй бол эндхийг ажиллуулна
+        create: {
+          name: playerName,
+          socketId: socket.id,
+          roomId: room.id,
+          isHost: hostExists === 0, // Хэрэв хост байхгүй бол энэ тоглогчийг хост болгоно
+        },
       });
 
-      if (roomData) {
-        io.in(roomCode).emit("roomData", {
-          roomCode: roomData.code,
-          host: roomData.player.find((p) => p.isHost)?.name || null,
-          players: roomData.player.map((p) => p.name),
-        });
+      const updatedRoomData = await getRoomData(roomCode); // Энэ функцийг өмнөх хариултаас авна уу
+      if (updatedRoomData) {
+        io.in(roomCode).emit("roomData", updatedRoomData);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("joinRoom error:", err);
-      socket.emit("joinError", {
-        message: err || "Өрөө нэвтрэхэд алдаа гарлаа.",
-      });
+      const errorMessage = err.message || "Өрөөнд нэвтрэхэд тодорхойгүй алдаа гарлаа.";
+      socket.emit("joinError", { message: errorMessage });
     }
   });
+ 
 
   socket.on("disconnecting", async () => {
     try {
       const player = await prisma.player.findFirst({
         where: { socketId: socket.id },
-        include: { room: { include: { player: true } } },
+        include: { room: true },
       });
 
       if (!player) return;
 
-      const roomCode = player.room.code;
+      const { room, isHost, id: playerId, roomId } = player;
+      const roomCode = room.code;
 
-      await prisma.player.delete({ where: { id: player.id } });
+      // Тоглогчийг устгана
+      await prisma.player.delete({ where: { id: playerId } });
 
-      const remaining = await prisma.player.findMany({
-        where: { roomId: player.roomId },
+      const remainingPlayers = await prisma.player.findMany({
+        where: { roomId: roomId },
       });
 
-      if (player.isHost) {
-        if (remaining.length > 0) {
-          await prisma.player.update({
-            where: { id: remaining[0].id },
-            data: { isHost: true },
-          });
-        } else {
-          // If the last player leaves, delete the room.
-          await prisma.room.delete({ where: { id: player.roomId } });
-          return;
-        }
+      // Хэрэв өрөөнд хүн үлдээгүй бол өрөөг устгана
+      if (remainingPlayers.length === 0) {
+        await prisma.room.delete({ where: { id: roomId } });
+        return; // Цааш ажиллах шаардлагагүй
       }
 
-      const updatedRoom = await prisma.room.findUnique({
-        where: { code: roomCode },
-        include: { player: true },
-      });
-
-      if (updatedRoom) {
-        io.in(roomCode).emit("roomData", {
-          roomCode: updatedRoom.code,
-          host: updatedRoom.player.find((p) => p.isHost)?.name || null,
-          players: updatedRoom.player.map((p) => p.name),
+      // Хэрэв гарсан тоглогч хост байсан бол шинэ хост томилно
+      if (isHost) {
+        await prisma.player.update({
+          where: { id: remainingPlayers[0].id },
+          data: { isHost: true },
         });
+      }
+
+      // Өрөөний мэдээллийг шинэчилж бүгдэд мэдээлнэ
+      const updatedRoomData = await getRoomData(roomCode);
+      if (updatedRoomData) {
+        io.in(roomCode).emit("roomData", updatedRoomData);
       }
     } catch (err) {
       console.error("disconnecting error:", err);

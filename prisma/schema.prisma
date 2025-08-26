@@ -46,7 +46,7 @@ model Player {
   results   Result[]
   socketId  String?
 
-  @@unique([roomId, name])
+  @@unique([name, roomId], name: "name_roomId")
 }
 
 model Reason {
