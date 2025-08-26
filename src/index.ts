@@ -9,8 +9,8 @@ import roomRouter from "./routes/room-routes";
 import excuseRoutes from "./routes/excuse-with-roast";
 import adminRouter from "./routes/admin-routes";
 import { registerSocketHandlers } from "./sockets/ socketHandlers";
-import { initVoteGame } from "./controller/init.vote.game";
 import playerRouters from "./routes/participant-routes";
+import { initVoteGame } from "./controller/vote/init.vote.game";
 
 
 const app = express();
