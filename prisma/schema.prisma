@@ -17,70 +17,70 @@
 generator client {
   provider = "prisma-client-js"
 }
- 
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Room {
-  id    Int     @id @default(autoincrement())
-  code String  @unique
-  roomName String 
-  createdAt  DateTime @default(now())
-  gameType  GameType @default(AI_ROAST)
-  results Result[]
-  player Player []
+  id         Int        @id @default(autoincrement())
+  code       String     @unique
+  roomName   String
+  createdAt  DateTime   @default(now())
+  gameType   GameType   @default(AI_ROAST)
+  results    Result[]
+  player     Player[]
   gamestatus GameStatus @default(PENDING)
-  message Message[]
+  message    Message[]
 }
- 
+
 model Player {
-  id        Int    @id @default(autoincrement())
-  name     String
-  room   Room @relation(fields: [roomId], references: [id])
-  roomId Int
-  isHost Boolean @default(false)
-  reasons Reason []
-  createdAt  DateTime @default(now())
-  results Result[]
-   socketId  String? 
+  id        Int      @id @default(autoincrement())
+  name      String
+  room      Room     @relation(fields: [roomId], references: [id])
+  roomId    Int
+  isHost    Boolean  @default(false)
+  reasons   Reason[]
+  createdAt DateTime @default(now())
+  results   Result[]
+  socketId  String?
+
   @@unique([roomId, name])
 }
- 
+
 model Reason {
-  id Int  @id @default(autoincrement())
-  text String
-  player Player @relation(fields: [playerId], references: [id])
+  id        Int      @id @default(autoincrement())
+  text      String
+  player    Player   @relation(fields: [playerId], references: [id])
   playerId  Int
-  createdAt  DateTime @default(now())
- 
+  createdAt DateTime @default(now())
 }
- 
+
 model Result {
-  id Int @id @default(autoincrement())
-  room Room @relation(fields: [roomId], references: [id])
-  roomId Int
-loser Player? @relation(fields: [loserId], references: [id])
-loserId Int
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  room      Room     @relation(fields: [roomId], references: [id])
+  roomId    Int
+  loser     Player?  @relation(fields: [loserId], references: [id])
+  loserId   Int
+  createdAt DateTime @default(now())
 }
- 
- 
+
 model Message {
   id        Int      @id @default(autoincrement())
-  summary String
+  summary   String
   roomId    Int
   createdAt DateTime @default(now())
   room      Room     @relation(fields: [roomId], references: [id])
 }
-enum  GameType {
+
+enum GameType {
   SPIN_WHELL
   AI_ROAST
   RUNNER
   TICTACTOE
 }
- 
+
 enum GameStatus {
   PENDING
   STARTED
