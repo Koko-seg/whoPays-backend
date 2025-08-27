@@ -41,13 +41,14 @@ export const getRoomByCode = async (req: Request, res: Response) => {
       room: {
         id: room.id,
         code: room.code,
-        roomname: room.roomName, // API spec-д roomname гэж байна
+        roomName: room.roomName, 
         createdAt: room.createdAt,
         gameType: room.gameType,
         gamestatus: room.gamestatus,
         player: room.player,
         results: room.results,
         message: room.message,
+        slectedGame: room.selectedGame
       }
     });
   } catch (err: any) {

@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import prisma from "../utils/prisma";
 
 export function roomHandlers(io: Server, socket: Socket) {
+  // Өрөөний мэдээллийг авах туслах функц
   const getRoomData = async (roomCode: string) => {
     const roomWithPlayers = await prisma.room.findUnique({
       where: { code: roomCode },
@@ -14,11 +15,17 @@ export function roomHandlers(io: Server, socket: Socket) {
       roomCode: roomWithPlayers.code,
       host: roomWithPlayers.player.find((p) => p.isHost)?.name || null,
       players: roomWithPlayers.player.map((p) => p.name),
+      selectedGame: roomWithPlayers.selectedGame ?? null,
+      currentGame: roomWithPlayers.selectedGame ?? null,
     };
   };
- socket.on("joinRoom", async ({ roomCode, playerName }) => {
+
+  // Тоглогч өрөөнд нэвтрэх эвэнт
+  socket.on("joinRoom", async ({ roomCode, playerName }) => {
     if (!roomCode || !playerName) {
-      // ... existing code ...
+      socket.emit("joinError", {
+        message: "Room code болон player name шаардлагатай.",
+      });
       return;
     }
 
@@ -29,71 +36,90 @@ export function roomHandlers(io: Server, socket: Socket) {
 
       if (!room) {
         socket.emit("joinError", {
-          message: "Өрөө олдсонгүй. Кодоо зөв эсэхийг шалгана уу.",
+          message: "Өрөө олдсонгүй. Кодоо шалгана уу.",
         });
         return;
       }
 
       socket.join(roomCode);
 
-      // Өрөөнд хост байгаа эсэхийг урьдчилан шалгана
-      const hostExists = await prisma.player.count({
-        where: { roomId: room.id, isHost: true },
-      });
-
-      // UPSERT ашиглан уралдааны нөхцөлийг арилгана
-      await prisma.player.upsert({
+      // Өмнө нь энэ нэртэй тоглогч өрөөнд байсан эсэхийг шалгана
+      const existingPlayer = await prisma.player.findUnique({
         where: {
-          // Тоглогчийг нэр болон өрөөний ID-аар нь давхцуулахгүйгээр хайна
-          // Энэ нь таны schema.prisma файлд @@unique([name, roomId]) тохиргоо шаардана
           name_roomId: {
             name: playerName,
             roomId: room.id,
           },
         },
-        // Хэрэв тоглогч олдвол эндхийг ажиллуулна
+      });
+
+      let isHost: boolean;
+
+      if (existingPlayer) {
+        // Хэрэв тоглогч өмнө нь байсан бол хост статусаа хадгална
+        isHost = existingPlayer.isHost;
+      } else {
+        // Өрөөнд хост байгаа эсэхийг шалгаад, хост байхгүй бол энэ тоглогчийг хост болгоно
+        const hostExists = await prisma.player.count({
+          where: { roomId: room.id, isHost: true },
+        });
+
+        isHost = hostExists === 0;
+      }
+
+      // Тоглогчийг шинэчлэх буюу үүсгэх (upsert)
+      await prisma.player.upsert({
+        where: {
+          name_roomId: {
+            name: playerName,
+            roomId: room.id,
+          },
+        },
         update: {
           socketId: socket.id,
         },
-        // Хэрэв тоглогч олдохгүй бол эндхийг ажиллуулна
         create: {
           name: playerName,
           socketId: socket.id,
           roomId: room.id,
-          isHost: hostExists === 0, // Хэрэв хост байхгүй бол энэ тоглогчийг хост болгоно
+          isHost,
         },
       });
 
-      const updatedRoomData = await getRoomData(roomCode); // Энэ функцийг өмнөх хариултаас авна уу
+      // Өрөөний шинэчлэгдсэн мэдээллийг авах
+      const updatedRoomData = await getRoomData(roomCode);
+
       if (updatedRoomData) {
         io.in(roomCode).emit("roomData", updatedRoomData);
       }
     } catch (err: any) {
       console.error("joinRoom error:", err);
-      const errorMessage = err.message || "Өрөөнд нэвтрэхэд тодорхойгүй алдаа гарлаа.";
-      socket.emit("joinError", { message: errorMessage });
+      socket.emit("joinError", { message: err.message || "Өрөөнд нэвтрэхэд алдаа гарлаа." });
     }
   });
- socket.on("host:select_game", async ({ roomId, gameType }) => {
-  try {
-    // тухайн room-ийн selectedGame-г шинэчилнэ
-    await prisma.room.update({
-      where: { code: roomId },
-      data: { selectedGame: gameType },
-    });
 
-    const updatedRoomData = await getRoomData(roomId); // selectedGame-г буцаах байдлаар шинэчил
-    if (updatedRoomData) {
-      io.in(roomId).emit("roomData", updatedRoomData);
+  // Хост тоглоом сонгох эвэнт
+  socket.on("host:select_game", async ({ roomCode, gameType }) => {
+      console.log("host:select_game ирлээ:", roomCode, gameType);
+    try {
+      await prisma.room.update({
+        where: { code: roomCode },
+        data: { selectedGame: gameType },
+      });
+
+      const updatedRoomData = await getRoomData(roomCode);
+      if (updatedRoomData) {
+        io.in(roomCode).emit("roomData", updatedRoomData);
+      }
+    } catch (err) {
+      console.error("host:select_game error:", err);
+      socket.emit("roomError", {
+        message: "Тоглоом сонгоход алдаа гарлаа.",
+      });
     }
-  } catch (err) {
-    console.error("host:select_game error:", err);
-    socket.emit("roomError", {
-      message: "Тоглоом сонгоход алдаа гарлаа.",
-    });
-  }
-});
+  });
 
+  // Тоглогч холбогдож байгаа эвэнт
   socket.on("disconnecting", async () => {
     try {
       const player = await prisma.player.findFirst({
@@ -116,10 +142,10 @@ export function roomHandlers(io: Server, socket: Socket) {
       // Хэрэв өрөөнд хүн үлдээгүй бол өрөөг устгана
       if (remainingPlayers.length === 0) {
         await prisma.room.delete({ where: { id: roomId } });
-        return; // Цааш ажиллах шаардлагагүй
+        return; // Цааш үргэлжлүүлэх шаардлагагүй
       }
 
-      // Хэрэв гарсан тоглогч хост байсан бол шинэ хост томилно
+      // Хэрэв хост гарсан бол шинэ хостыг томилно
       if (isHost) {
         await prisma.player.update({
           where: { id: remainingPlayers[0].id },
@@ -127,7 +153,7 @@ export function roomHandlers(io: Server, socket: Socket) {
         });
       }
 
-      // Өрөөний мэдээллийг шинэчилж бүгдэд мэдээлнэ
+      // Өрөөний шинэчилсэн мэдээллийг бүх тоглогчдод илгээх
       const updatedRoomData = await getRoomData(roomCode);
       if (updatedRoomData) {
         io.in(roomCode).emit("roomData", updatedRoomData);
