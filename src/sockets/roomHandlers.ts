@@ -74,7 +74,25 @@ export function roomHandlers(io: Server, socket: Socket) {
       socket.emit("joinError", { message: errorMessage });
     }
   });
- 
+ socket.on("host:select_game", async ({ roomId, gameType }) => {
+  try {
+    // тухайн room-ийн selectedGame-г шинэчилнэ
+    await prisma.room.update({
+      where: { code: roomId },
+      data: { selectedGame: gameType },
+    });
+
+    const updatedRoomData = await getRoomData(roomId); // selectedGame-г буцаах байдлаар шинэчил
+    if (updatedRoomData) {
+      io.in(roomId).emit("roomData", updatedRoomData);
+    }
+  } catch (err) {
+    console.error("host:select_game error:", err);
+    socket.emit("roomError", {
+      message: "Тоглоом сонгоход алдаа гарлаа.",
+    });
+  }
+});
 
   socket.on("disconnecting", async () => {
     try {

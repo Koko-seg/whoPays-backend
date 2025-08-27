@@ -10,7 +10,7 @@ export const getRoomByCode = async (req: Request, res: Response) => {
 
     // Бутархай, хоосон, урт шалгах
     if (!code || typeof code !== "string" || !/^\d{5}$/.test(code)) {
-      return res.status(400).json({ message: "Хүсьсэн 5 оронтой кодыг оруулна уу." });
+      return res.status(400).json({ message: "Хүссэн 5 оронтой кодыг оруулна уу." });
     }
 
     // Өрөө болон бүх player-ын мэдээллийг авна
