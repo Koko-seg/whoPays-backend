@@ -62,13 +62,13 @@ export const createRoom = async (req: Request, res: Response) => {
         isHost: true,
       },
     });
-
+``
     // Өрөөний мэдээллийг буцаана
     return res.status(201).json({
       roomName: newRoom.roomName,
       roomCode: newRoom.code,
       roomId: newRoom.id,
-      hostplayerId: hostPlayer.id,
+      hostPlayerId: hostPlayer.id,
     });
   } catch (err: any) {
     console.error("Өрөө үүсгэхэд алдаа гарлаа:", err);

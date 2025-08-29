@@ -10,7 +10,6 @@ import excuseRoutes from "./routes/excuse-with-roast";
 import adminRouter from "./routes/admin-routes";
 import { registerSocketHandlers } from "./sockets/ socketHandlers";
 import playerRouters from "./routes/participant-routes";
-import { initVoteGame } from "./controller/vote/init.vote.game";
 
 
 const app = express();
@@ -35,7 +34,6 @@ const io = new IOServer(httpServer, {
 // Register all socket events
 registerSocketHandlers(io);
 
-initVoteGame(io);
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
