@@ -12,13 +12,14 @@ export function roomHandlers(io: Server, socket: Socket) {
 
     return {
       roomCode: roomWithPlayers.code,
-      host: roomWithPlayers.player.find((p) => p.isHost)?.name || null,
-      players: roomWithPlayers.player.map((p) => p.name),
+      host: roomWithPlayers.player.find(p => p.isHost)?.name || null,
+      players: roomWithPlayers.player.map(p => p.name),
       selectedGame: roomWithPlayers.selectedGame ?? null,
       currentGame: roomWithPlayers.selectedGame ?? null,
     };
   };
 
+  // --- Join Room ---
   socket.on("joinRoom", async ({ roomCode, playerName }) => {
     if (!roomCode || !playerName) {
       socket.emit("joinError", { message: "Room code болон player name шаардлагатай." });
@@ -60,6 +61,7 @@ export function roomHandlers(io: Server, socket: Socket) {
     }
   });
 
+  // --- Host select game ---
   socket.on("host:select_game", async ({ roomCode, gameType }) => {
     try {
       await prisma.room.update({ where: { code: roomCode }, data: { selectedGame: gameType } });
@@ -71,6 +73,7 @@ export function roomHandlers(io: Server, socket: Socket) {
     }
   });
 
+  // --- Disconnect ---
   socket.on("disconnecting", async () => {
     try {
       const player = await prisma.player.findFirst({ where: { socketId: socket.id }, include: { room: true } });
@@ -82,7 +85,6 @@ export function roomHandlers(io: Server, socket: Socket) {
       await prisma.player.delete({ where: { id: playerId } });
 
       const remainingPlayers = await prisma.player.findMany({ where: { roomId } });
-
       if (isHost && remainingPlayers.length > 0) {
         await prisma.player.update({ where: { id: remainingPlayers[0].id }, data: { isHost: true } });
       }
@@ -92,5 +94,37 @@ export function roomHandlers(io: Server, socket: Socket) {
     } catch (err) {
       console.error("disconnecting error:", err);
     }
+  });
+
+  // --- SpinWheel update ---
+  socket.on("spin", async ({ rotation, winner, roomCode }) => {
+    try {
+      io.in(roomCode).emit("spinUpdate", { rotation, winner });
+    } catch (err) {
+      console.error("spin error:", err);
+      socket.emit("spinError", { message: "Spin хийхэд алдаа гарлаа." });
+    }
+  });
+
+  // --- Runner Game: update positions ---
+  socket.on("runner:update_positions", ({ roomCode, positions }: { roomCode: string; positions: Record<string, number> }) => {
+    // Бүх тоглогчид байрлалыг илгээх
+    io.in(roomCode).emit("runner:update_positions", positions);
+
+    // Хожигчийг шалгах
+    const winnerEntry = Object.entries(positions).find(([_, pos]) => pos >= 100);
+    if (winnerEntry) {
+      io.in(roomCode).emit("runner:finish", { winner: winnerEntry[0] });
+    }
+  });
+
+  // --- Runner Game: finish ---
+  socket.on("runner:finish", ({ roomCode, winner }: { roomCode: string; winner: string }) => {
+    io.in(roomCode).emit("runner:finish", { winner });
+  });
+
+  // --- Runner Game: start ---
+  socket.on("runner:start_game", ({ roomCode }: { roomCode: string }) => {
+    io.in(roomCode).emit("runner:start_game");
   });
 }
