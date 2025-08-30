@@ -1,28 +1,28 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+ 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+ 
 // generator client {
 //   provider = "prisma-client-js"
 //   output   = "../generated/prisma"
 // }
-
+ 
 // datasource db {
 //   provider = "postgresql"
 //   url      = env("DATABASE_URL")
 // }
-
+ 
 generator client {
   provider = "prisma-client-js"
 }
-
+ 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
+ 
 model Room {
   id         Int        @id @default(autoincrement())
   code       String     @unique
@@ -35,7 +35,7 @@ model Room {
   message    Message[]
   selectedGame String?  // <- энэ талбар байх ёстой
 }
-
+ 
 model Player {
   id        Int      @id @default(autoincrement())
   name      String
@@ -46,10 +46,10 @@ model Player {
   createdAt DateTime @default(now())
   results   Result[]
   socketId  String?
-
+ 
   @@unique([name, roomId], name: "name_roomId")
 }
-
+ 
 model Reason {
   id        Int      @id @default(autoincrement())
   text      String
@@ -57,7 +57,7 @@ model Reason {
   playerId  Int
   createdAt DateTime @default(now())
 }
-
+ 
 model Result {
   id        Int      @id @default(autoincrement())
   room      Room     @relation(fields: [roomId], references: [id])
@@ -66,22 +66,24 @@ model Result {
   loserId   Int
   createdAt DateTime @default(now())
 }
-
+ 
 model Message {
   id        Int      @id @default(autoincrement())
   summary   String
   roomId    Int
+  socketId  String?  // <- нэмлээ
   createdAt DateTime @default(now())
   room      Room     @relation(fields: [roomId], references: [id])
 }
-
+ 
+ 
 enum GameType {
   SPIN_WHELL
   AI_ROAST
   RUNNER
   TICTACTOE
 }
-
+ 
 enum GameStatus {
   PENDING
   STARTED
