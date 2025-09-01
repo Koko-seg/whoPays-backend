@@ -123,8 +123,83 @@ export function roomHandlers(io: Server, socket: Socket) {
     io.in(roomCode).emit("runner:finish", { winner });
   });
 
+
+
   // --- Runner Game: start ---
   socket.on("runner:start_game", ({ roomCode }: { roomCode: string }) => {
     io.in(roomCode).emit("runner:start_game");
   });
+// --- Roast Game ---
+socket.on("roast:submit_reason", async ({ roomCode, reason }) => {
+  if (!roomCode || !reason) return;
+
+  // player info
+  const player = await prisma.player.findFirst({ where: { socketId: socket.id } });
+  if (!player) return;
+
+  // 1️⃣ Submit хийсэн reason-ийг Reason table-д хадгалах
+  await prisma.reason.create({
+    data: {
+      text: reason,
+      playerId: player.id,
+    },
+  });
+
+  // 2️⃣ Өрөөнд бүх тоглогчид reason харуулах
+  io.in(roomCode).emit("roast:reason_submitted", { socketId: socket.id, reason });
+
+  // 3️⃣ Таймер зөвхөн нэг удаа ажиллах
+  if (!(io as any).roastTimers) (io as any).roastTimers = {};
+  if (!(io as any).roastTimers[roomCode]) {
+    (io as any).roastTimers[roomCode] = true;
+
+    let counter = 30;
+    const interval = setInterval(async () => {
+      counter--;
+      io.in(roomCode).emit("roast:timer_update", counter);
+
+      if (counter <= 0) {
+        clearInterval(interval);
+        io.in(roomCode).emit("roast:timer_finished");
+        delete (io as any).roastTimers[roomCode];
+
+        try {
+          // 4️⃣ Таймер дууссаны дараа Reason table-с бүх тоглогчийн шалтгаануудыг татах
+          const reasons = await prisma.reason.findMany({
+            where: { player: { roomId: player.roomId } },
+            select: { text: true, player: { select: { socketId: true, name: true } } },
+          });
+
+          const aiPlayers = reasons.map(r => ({
+            socketId: r.player.socketId,
+            reason: r.text,
+          }));
+
+          // 5️⃣ AI roast хийх controller руу дамжуулах
+          const fetchRes = await fetch("http://localhost:4200/roast", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code: roomCode, players: aiPlayers }),
+          });
+
+          const data = await fetchRes.json();
+
+          // 6️⃣ Result-ийг бүх тоглогчид явуулах
+          if (data.success && data.roast) {
+            io.in(roomCode).emit("roast:result", {
+              roast: data.roast,
+              chosen: data.roastedReason,
+            });
+          } else {
+            io.in(roomCode).emit("roast:error", { message: data.message || "Roast үүсгэхэд алдаа гарлаа" });
+          }
+        } catch (err) {
+          console.error("Roast fetch error:", err);
+          io.in(roomCode).emit("roast:error", { message: "Roast үүсгэхэд алдаа гарлаа" });
+        }
+      }
+    }, 1000);
+  }
+});
+
 }
