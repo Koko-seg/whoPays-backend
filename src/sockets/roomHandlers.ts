@@ -16,6 +16,7 @@ export function roomHandlers(io: Server, socket: Socket) {
       players: roomWithPlayers.player.map(p => p.name),
       selectedGame: roomWithPlayers.selectedGame ?? null,
       currentGame: roomWithPlayers.selectedGame ?? null,
+      roomName: roomWithPlayers.roomName,
     };
   };
 
@@ -129,6 +130,8 @@ export function roomHandlers(io: Server, socket: Socket) {
   socket.on("runner:start_game", ({ roomCode }: { roomCode: string }) => {
     io.in(roomCode).emit("runner:start_game");
   });
+
+
 // --- Roast Game ---
 socket.on("roast:submit_reason", async ({ roomCode, reason }) => {
   if (!roomCode || !reason) return;
