@@ -10,12 +10,14 @@ export const getRoomByCode = async (req: Request, res: Response) => {
 
     // Бутархай, хоосон, урт шалгах
     if (!code || typeof code !== "string" || !/^\d{5}$/.test(code)) {
-      return res.status(400).json({ message: "Хүссэн 5 оронтой кодыг оруулна уу." });
+      return res
+        .status(400)
+        .json({ message: "Хүссэн 5 оронтой кодыг оруулна уу." });
     }
 
     // Өрөө болон бүх player-ын мэдээллийг авна
     const room = await prisma.room.findUnique({
-      where: { code: code }, 
+      where: { code: code },
       include: {
         player: {
           select: {
@@ -37,22 +39,23 @@ export const getRoomByCode = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Room does not exist" });
     }
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       room: {
         id: room.id,
         code: room.code,
-        roomName: room.roomName, 
+        roomName: room.roomName,
         createdAt: room.createdAt,
         gameType: room.gameType,
         gamestatus: room.gamestatus,
         player: room.player,
         results: room.results,
         message: room.message,
-        slectedGame: room.selectedGame
-      }
+        selectedGame: room.selectedGame,
+      },
     });
-  } catch (err: any) {
-    console.error("getRoomByCode алдаа:", err);
-    return res.status(500).json({ message: "Серверийн алдаа", error: err.message });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("getRoomByCode алдаа:", message);
+    return res.status(500).json({ message: "Серверийн алдаа", error: message });
   }
 };

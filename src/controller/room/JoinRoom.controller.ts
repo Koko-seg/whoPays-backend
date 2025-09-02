@@ -9,19 +9,18 @@ export const addplayerToRoom = async (req: Request, res: Response) => {
     const { nickname } = req.body;
 
     if (!roomCode || roomCode.length !== 5) {
-      return res.status(400).json({ message: "Зөв өрөөний код оруулна уу (5 орон)" });
+      return res
+        .status(400)
+        .json({ message: "Зөв өрөөний код оруулна уу (5 орон)" });
     }
 
     if (!nickname || typeof nickname !== "string" || nickname.trim() === "") {
       return res.status(400).json({ message: "Nickname оруулна уу." });
     }
 
-    // Өрөө байгаа эсэх, тоглоом эхэлсэн эсэхийг шалгана
     const room = await prisma.room.findUnique({
       where: { code: roomCode },
-      include: {
-        player: true,
-      },
+      include: { player: true },
     });
 
     if (!room) {
@@ -29,14 +28,15 @@ export const addplayerToRoom = async (req: Request, res: Response) => {
     }
 
     if (room.gamestatus !== "PENDING") {
-      return res.status(400).json({ message: "Cannot join room: game already started" });
+      return res
+        .status(400)
+        .json({ message: "Cannot join room: game already started" });
     }
 
     if (room.player.length >= MAX_player) {
       return res.status(400).json({ message: "Room is full" });
     }
 
-    // Nickname давтагдсан эсэхийг шалгана
     const existingplayer = room.player.find(
       (p) => p.name.toLowerCase() === nickname.trim().toLowerCase()
     );
@@ -45,7 +45,6 @@ export const addplayerToRoom = async (req: Request, res: Response) => {
       return res.status(409).json({ message: "Nickname already taken" });
     }
 
-    // Шинэ player үүсгэнэ
     const newPlayer = await prisma.player.create({
       data: {
         name: nickname.trim(),
@@ -58,10 +57,18 @@ export const addplayerToRoom = async (req: Request, res: Response) => {
       playerId: newPlayer.id,
       message: "player added successfully",
     });
-  } catch (err: any) {
-    console.error("player нэмэхэд алдаа гарлаа:", err);
-    return res
-      .status(500)
-      .json({ message: "Серверийн алдаа гарлаа", error: err.message });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error("player нэмэхэд алдаа гарлаа:", err.message);
+      return res
+        .status(500)
+        .json({ message: "Серверийн алдаа гарлаа", error: err.message });
+    }
+
+    console.error("player нэмэхэд тодорхойгүй алдаа:", err);
+    return res.status(500).json({
+      message: "Серверийн тодорхойгүй алдаа гарлаа",
+      error: String(err),
+    });
   }
 };

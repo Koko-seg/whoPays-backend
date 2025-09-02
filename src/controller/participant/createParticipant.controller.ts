@@ -1,12 +1,11 @@
-// src/controllers/player.controller.ts or add to room.controller.ts
+// src/controllers/player.controller.ts
 import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
- 
+
 export const createplayer = async (req: Request, res: Response) => {
   try {
-    const { roomCode, playerName } = req.body; // Хүсэлтээс өрөөний код болон тоглогчийн нэрийг авна
- 
-    // Оролтын утгуудыг шалгана
+    const { roomCode, playerName } = req.body;
+
     if (!roomCode || typeof roomCode !== "string" || roomCode.trim() === "") {
       return res.status(400).json({ message: "Өрөөний кодыг оруулна уу." });
     }
@@ -17,48 +16,41 @@ export const createplayer = async (req: Request, res: Response) => {
     ) {
       return res.status(400).json({ message: "Тоглогчийн нэрийг оруулна уу." });
     }
- 
-    // Өрөөг кодоор нь хайна
+
     const room = await prisma.room.findUnique({
       where: { code: roomCode.trim() },
-      include: {
-        player: true, // Өрөөний тоглогчдыг хамт татна
-      },
+      include: { player: true },
     });
- 
-    // Хэрэв өрөө олдсон эсэхийг шалгана
+
     if (!room) {
       return res
         .status(404)
         .json({ message: "Өрөө олдсонгүй. Кодоо шалгана уу." });
     }
- 
-    // Ижил нэртэй тоглогч тухайн өрөөнд байгаа эсэхийг шалгана (нэр давхардлаас сэргийлнэ)
+
     const existingplayer = room.player.find(
       (p) => p.name.toLowerCase() === playerName.trim().toLowerCase()
     );
- 
-    // if (existingplayer) {
-    //   // Хэрэв ижил нэртэй тоглогч байвал тэр тоглогчийг буцаана
-    //   return res.status(200).json({
-    //     message: "Та аль хэдийн энэ өрөөнд ижил нэрээр нэгдсэн байна.",
-    //     room: {
-    //       id: room.id,
-    //       name: room.roomName,
-    //       code: room.code,
-    //     },
-    //     player: {
-    //       id: existingplayer.id,
-    //       name: existingplayer.name,
-    //     },
-    //   });
-    // }
- 
-    // Шинэ тоглогчийг өгөгдлийн санд үүсгэнэ
+
+    if (existingplayer) {
+      return res.status(200).json({
+        message: "Та аль хэдийн энэ өрөөнд ижил нэрээр нэгдсэн байна.",
+        room: {
+          id: room.id,
+          name: room.roomName,
+          code: room.code,
+        },
+        player: {
+          id: existingplayer.id,
+          name: existingplayer.name,
+        },
+      });
+    }
+
     const newPlayer = await prisma.player.create({
       data: {
         name: playerName.trim(),
-        roomId: room.id, // Олдсон өрөөний ID-аар холбоно
+        roomId: room.id,
       },
       select: {
         id: true,
@@ -66,8 +58,7 @@ export const createplayer = async (req: Request, res: Response) => {
         createdAt: true,
       },
     });
- 
-    // Амжилттай нэгдсэн хариуг буцаана
+
     return res.status(201).json({
       message: "Өрөөнд амжилттай нэгдлээ!",
       room: {
@@ -77,12 +68,19 @@ export const createplayer = async (req: Request, res: Response) => {
       },
       player: newPlayer,
     });
-  } catch (err: any) {
-    console.error("Өрөөнд нэгдэхэд алдаа гарлаа:", err);
-    return res
-      .status(500)
-      .json({ message: "Серверийн дотоод алдаа гарлаа.", error: err.message });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error("Өрөөнд нэгдэхэд алдаа гарлаа:", err.message);
+      return res.status(500).json({
+        message: "Серверийн дотоод алдаа гарлаа.",
+        error: err.message,
+      });
+    }
+
+    console.error("Өрөөнд нэгдэхэд тодорхойгүй алдаа:", err);
+    return res.status(500).json({
+      message: "Серверийн тодорхойгүй алдаа гарлаа.",
+      error: String(err),
+    });
   }
 };
- 
- 

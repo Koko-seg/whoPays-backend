@@ -1,3 +1,4 @@
+// src/controllers/player.controller.ts
 import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
 
@@ -6,7 +7,9 @@ export const removeplayerFromRoom = async (req: Request, res: Response) => {
     const { roomCode, playerId } = req.params;
 
     if (!roomCode || roomCode.length !== 5) {
-      return res.status(400).json({ message: "Зөв өрөөний код оруулна уу (5 орон)" });
+      return res
+        .status(400)
+        .json({ message: "Зөв өрөөний код оруулна уу (5 орон)" });
     }
 
     if (!playerId || isNaN(Number(playerId))) {
@@ -16,9 +19,7 @@ export const removeplayerFromRoom = async (req: Request, res: Response) => {
     // Өрөө байгаа эсэхийг шалгана
     const room = await prisma.room.findUnique({
       where: { code: roomCode },
-      include: {
-        player: true,
-      },
+      include: { player: true },
     });
 
     if (!room) {
@@ -27,15 +28,14 @@ export const removeplayerFromRoom = async (req: Request, res: Response) => {
 
     // Тоглоом эхэлсэн бол player устгаж болохгүй
     if (room.gamestatus !== "PENDING") {
-      return res.status(400).json({ message: "Cannot remove player: game already started" });
+      return res
+        .status(400)
+        .json({ message: "Cannot remove player: game already started" });
     }
 
-    // player байгаа эсэх, тухайн өрөөнд харьяалагдаж байгаа эсэхийг шалгана
+    // player байгаа эсэхийг шалгана
     const player = await prisma.player.findFirst({
-      where: {
-        id: Number(playerId),
-        roomId: room.id,
-      },
+      where: { id: Number(playerId), roomId: room.id },
     });
 
     if (!player) {
@@ -48,18 +48,24 @@ export const removeplayerFromRoom = async (req: Request, res: Response) => {
     }
 
     // player-г устгана
-    await prisma.player.delete({
-      where: { id: Number(playerId) },
-    });
+    await prisma.player.delete({ where: { id: Number(playerId) } });
 
     return res.status(200).json({
       message: "player removed successfully",
       playerId: Number(playerId),
     });
-  } catch (err: any) {
-    console.error("player устгахад алдаа гарлаа:", err);
-    return res
-      .status(500)
-      .json({ message: "Серверийн алдаа гарлаа", error: err.message });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error("player устгахад алдаа гарлаа:", err.message);
+      return res
+        .status(500)
+        .json({ message: "Серверийн алдаа гарлаа", error: err.message });
+    }
+
+    console.error("player устгахад тодорхойгүй алдаа:", err);
+    return res.status(500).json({
+      message: "Серверийн тодорхойгүй алдаа гарлаа",
+      error: String(err),
+    });
   }
 };

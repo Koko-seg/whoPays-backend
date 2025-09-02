@@ -36,13 +36,6 @@ const createRoom = async (req, res) => {
         if (!hostNickname || typeof hostNickname !== "string" || hostNickname.trim() === "") {
             return res.status(400).json({ message: "Host nickname оруулна уу." });
         }
-        // Өрөөний нэр давтагдсан эсэхийг шалгана
-        const existingRoomByName = await prisma_1.default.room.findUnique({
-            where: { roomName: roomName.trim() },
-        });
-        if (existingRoomByName) {
-            return res.status(409).json({ message: "Room name already exists" });
-        }
         // Өвөрмөц 5 оронтой кодыг үүсгэнэ
         const uniqueCode = await generateUniqueRoomCode();
         // Шинэ өрөөг өгөгдлийн санд үүсгэнэ
@@ -55,19 +48,20 @@ const createRoom = async (req, res) => {
             },
         });
         // Host player үүсгэнэ
-        const hostplayer = await prisma_1.default.player.create({
+        const hostPlayer = await prisma_1.default.player.create({
             data: {
                 name: hostNickname.trim(),
                 roomId: newRoom.id,
                 isHost: true,
             },
         });
+        ``;
         // Өрөөний мэдээллийг буцаана
         return res.status(201).json({
             roomName: newRoom.roomName,
             roomCode: newRoom.code,
             roomId: newRoom.id,
-            hostplayerId: hostplayer.id,
+            hostPlayerId: hostPlayer.id,
         });
     }
     catch (err) {

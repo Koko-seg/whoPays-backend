@@ -8,6 +8,7 @@
     "noImplicitAny": true,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./src"
-  }
+    "rootDir": "."
+  },
+  "include": ["src/**/*", "eslint.config.mts"]
 }
