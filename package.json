@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx prisma generate & tsc",
     "start": "npm run build && npx prisma generate && npx prisma migrate deploy && node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "lint": "eslint src --ext .ts",
