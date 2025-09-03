@@ -264,7 +264,6 @@ export function roomHandlers(io: Server, socket: Socket) {
           }
         }, 1000);
 
-        // room-д таймерийн flag хадгалах
         io.sockets.adapter.rooms.get(roomCode)?.add("roastTimer");
       }
     }
