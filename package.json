@@ -42,5 +42,8 @@
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.41.0"
+  },
+  "engine": {
+    "node": "20.x"
   }
 }
